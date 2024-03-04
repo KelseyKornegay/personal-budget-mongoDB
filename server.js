@@ -4,6 +4,7 @@ const app = express();
 const port = 3000;
 
 app.use(cors());
+app.use(express.json());
 
 
 const mongoose = require('mongoose')
@@ -33,20 +34,31 @@ app.get("/budget", async (req, res) => {
 });
 
 app.post("/addNewBudget", async (req, res) => {
+    console.log(req.body);
     try {
         await mongoose.connect(url);
-        
+    } catch (error) {
+        console.error("Error connecting to the database:", error);
+        return res.status(500).send("Error connecting to the database");
+    }
+
+    try {
         // Insert
         let newData = new budgetModel(req.body);
-        await budgetModel.insertMany(newData);
-        
-        res.send("Data Entered Successfully");
+        await newData.save();
+    } catch (error) {
+        console.error("Error inserting data:", error);
+        return res.status(500).send("Error inserting data");
+    }
 
-        // Close connection
+    res.send("Data Entered Successfully");
+
+    // Close connection
+    try {
         await mongoose.connection.close();
     } catch (error) {
-        console.error("Error handling the request:", error);
-        res.status(500).send("Internal Server Error");
+        console.error("Error closing the connection:", error);
+        return res.status(500).send("Error closing the connection");
     }
 });
 
